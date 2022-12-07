@@ -1,4 +1,4 @@
-import socket, os, my_parser
+import socket, os, Protocol_Parser
 from threading import Thread
 import importlib
 
@@ -44,8 +44,8 @@ class Client2Proxy(Thread):
                 #print(f"[{self.port}] -> {data[:100].hex()}")
 
                 try:
-                    importlib.reload(my_parser)        
-                    my_parser.parse(data, self.port, 'client')
+                    importlib.reload(Protocol_Parser)        
+                    Protocol_Parser.parse(data, self.port, 'client')
                 except Exception as e:
                     print ('client[{self.port}]', e)
                 # forward to server
@@ -72,8 +72,8 @@ class Proxy2Server(Thread):
                 #print(f"[{self.port}] <- {data[:100].hex()}")
 
                 try:
-                    importlib.reload(my_parser)                        
-                    my_parser.parse(data, self.port, 'server')
+                    importlib.reload(Protocol_Parser)                        
+                    Protocol_Parser.parse(data, self.port, 'server')
                 except Exception as e:
                     print(f'server[{self.port}]', e)
                 # forward to client
