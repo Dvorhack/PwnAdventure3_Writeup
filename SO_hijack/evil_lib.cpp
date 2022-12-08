@@ -27,50 +27,35 @@ void World::Tick(float){
 
 }
 
-void parse_action(const char * m){
-    if(strncmp(m+1,"speed ",6) == 0){
-        float new_speed = 0;
-        printf("%c\n",m[6+1]);
-        switch (m[1+6]) {
-        case 's' : {// slow
-            new_speed = 100;
-            break;
-        }
-        case 'm': { // medium
-            new_speed = 1000;
-            break;
-        }
-        case 'f': {
-            new_speed = 9000;
-            break;
-        }
-        default: {
-            new_speed = 400;
-            break;
-        }
-        }
-        
-        if (new_speed != 0 ){
-            printf("Changing speed from %f to %f\n", my_player->m_walkingSpeed, new_speed);
-            my_player->m_walkingSpeed = new_speed;
-        }else{
-            printf("Actual speed %f\n", my_player->GetWalkingSpeed());
-        }
-    }else{
-        printf("Unknown command\n");
-    }
-}
+
 
 void Player::SetJumpState(bool b){
     printf("[*] SetJumpState(%d)\n", b);
 }
 
-void Player::Chat(const char * message){
+void Player::Chat(const char * m){
 
     #define ACTION_CHAR ':'
 
-    printf("Messsage: %s\n", message);
-    if (message[0] == ACTION_CHAR){
-        parse_action(message);
+    printf("Messsage: %s\n", m);
+    if (m[0] == ACTION_CHAR){
+        if(strncmp(m+1,"speed ",6) == 0){
+        int new_speed = atoi(m+6+1);
+        
+        if (new_speed != 0 ){
+            printf("Changing speed from %f to %f\n", my_player->m_walkingSpeed,(float) new_speed);
+            my_player->m_walkingSpeed = (float)new_speed;
+        }else{
+            printf("Actual speed %f\n", my_player->GetWalkingSpeed());
+        }
+    }else if(strncmp(m+1,"tp ",3) == 0){
+        Vector3* new_pos = new Vector3();
+        sscanf(m+1+3, "%f %f %f", &(new_pos->x),&(new_pos->y),&(new_pos->z));
+        printf("New pos: %f %f %f",(new_pos->x),(new_pos->y),(new_pos->z));
+        this->SetPosition(*new_pos);
+    
+    }else{
+        printf("Unknown command\n");
+    }
     }
 }
