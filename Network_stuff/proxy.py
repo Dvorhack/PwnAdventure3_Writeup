@@ -1,4 +1,4 @@
-import socket, os, Protocol_Parser
+import socket, os, Protocol_Parser, sys
 from threading import Thread
 import importlib
 
@@ -84,7 +84,11 @@ class Proxy2Server(Thread):
     
 
 if __name__ == "__main__":
-    SERVER_IP = '20.111.26.84'
+    if len(sys.argv) != 2:
+        print(f"Usage: python3 {sys.argv[0]} <server ip>")
+    else:
+        SERVER_IP = sys.argv[1]
+    
     MASTER_PORT = 3333
 
     
