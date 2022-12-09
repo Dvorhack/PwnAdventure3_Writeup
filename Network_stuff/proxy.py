@@ -38,20 +38,23 @@ class Client2Proxy(Thread):
     
     def run(self):
         while True:
-            data = self.client.recv(4096)
-            if data:
-                # First, display data
-                #print(f"[{self.port}] -> {data[:100].hex()}")
+            try:
+                data = self.client.recv(4096)
+                if data:
+                    # First, display data
+                    #print(f"[{self.port}] -> {data[:100].hex()}")
 
-                try:
+                
                     importlib.reload(Protocol_Parser)        
                     Protocol_Parser.parse(data, self.port, 'client')
-                except Exception as e:
-                    print ('client[{self.port}]', e)
-                # forward to server
-
-                # Then, send data to real server
                 self.server.sendall(data)
+            except Exception as e:
+                print ('client[{self.port}]', e)
+                # forward to server
+                exit()
+
+            # Then, send data to real server
+            
 
 
 class Proxy2Server(Thread):
@@ -66,20 +69,22 @@ class Proxy2Server(Thread):
     # run in thread
     def run(self):
         while True:
-            data = self.server.recv(4096)
-            if data:
-                # First, display data
-                #print(f"[{self.port}] <- {data[:100].hex()}")
+            try:
+                data = self.server.recv(4096)
+                if data:
+                    # First, display data
+                    #print(f"[{self.port}] <- {data[:100].hex()}")
 
-                try:
                     importlib.reload(Protocol_Parser)                        
                     Protocol_Parser.parse(data, self.port, 'server')
-                except Exception as e:
-                    print(f'server[{self.port}]', e)
+                self.client.sendall(data)
+            except Exception as e:
+                print(f'server[{self.port}]', e)
                 # forward to client
+                exit()
 
                 # Then, send data to real server
-                self.client.sendall(data)
+                
 
     
 
