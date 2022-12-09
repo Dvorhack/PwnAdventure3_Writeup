@@ -12,7 +12,7 @@ Solveur SMT
 Ne prend pas de dégat
 
 - Bateau pirate
-Demande code 
+Demande code : en local
 Surement reverse
 
 - Ile vache
@@ -25,3 +25,7 @@ Surement reverse
 - Pirate's Treasure
 - Fire and Ice (Ragmarock)
 - Blocky's Revenge (Maze solver)
+
+## TODO
+
+- Change biome (0x200)

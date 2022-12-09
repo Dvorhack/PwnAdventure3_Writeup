@@ -309,13 +309,15 @@ class SalvePacket(Packet):
 
 
 def parse(data, port, type):
-    while len(data) != 0:
+    if data == b'\x00\x00':
+        return
+    while len(data) != 0 :
         pkt = Packet.parse(data)
         data = data[len(pkt.encode()):]
-        # if type == 'client' and pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:
-        #     print(f"[{port}] {pkt}")
-        if type == 'client' and (pkt.header.type != PositionPacket.TYPE and pkt.header.type != BeaconPacket.TYPE):
-            print(f"[{port}] {pkt}")
+        if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and
+            print(f"[{type}] {pkt}")
+        # if type == 'client' and (pkt.header.type != PositionPacket.TYPE and pkt.header.type != BeaconPacket.TYPE):
+        #    print(f"[{port}] {pkt}")
 
 if __name__ == "__main__":
     pkt = Packet.parse(bytes.fromhex("7073a50d0000832c49c6f57402c776b832450000c472000068ff330000007073a60d00002aeac7c5556908c74bb12e450000d4530000b5ff8d0000007073a70d0000addffbc5d99622c727244e450000388a00000000000000007073a80d00004e6108c3099323c75e9a1a450000c03e00000500a00000007073a90d0000767a014547e20bc714aa1145000070d7000057007aff00006d76a20d00003b5fc2c6ea7de3c6241c2545e7fffffffcf17073a30d0000d6b0b1c6f1c2d5c67e382e4500003c800000c0fefeff00007073a40d000006c5cbc6984511c7a27e43450000e9b80000e4ff62ff00000000"))
