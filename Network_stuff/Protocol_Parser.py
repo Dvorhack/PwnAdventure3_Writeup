@@ -61,7 +61,7 @@ class PacketPositionPayload():
 
     @staticmethod
     def parse(payload):
-        X, Y, Z, look, unk, key = unpack("fffIHH",payload)
+        X, Y, Z, look, unk, key = unpack("fffIHH",payload[:PacketPositionPayload.POSITION_SIZE])
         return PacketPositionPayload(X, Y, Z, look, unk, key)
     
     def encode(self):
@@ -85,19 +85,71 @@ class PacketDefaultPayload():
     def __str__(self) -> str:
         return f"Unknown payload: {self.payload.hex()}"
 
-class PacketShootPayload():
-    def __init__(self, payload) :
+class PacketEnemyPosPayload():
+    def __init__(self, id, X, Y, Z, payload):
+        self.id = id
+        self.X = X
+        self.Y = Y
+        self.Z = Z
         self.payload = payload
 
     @staticmethod
     def parse(payload):
-        return PacketShootPayload(payload)
+        id, X, Y, Z= unpack("Ifff",payload[:16])
+        return PacketEnemyPosPayload(id, X, Y, Z, payload[16:])
+    
+    def encode(self):
+        return pack("Ifff", self.id, self.X, self.Y, self.Z) + self.payload
+    
+    def __str__(self) -> str:
+        return f"EnemyPos: ID:{self.id} {self.X} / {self.Y} / {self.Z} {self.payload[:10].hex()} ..."
+
+class PacketReloadPayload():
+    def __init__(self) :
+        self.payload = b''
+
+    @staticmethod
+    def parse(payload):
+        return PacketReloadPayload()
     
     def encode(self):
         return self.payload
     
     def __str__(self) -> str:
-        return f"Shoot: {self.payload.hex()}"
+        return f"Reload"
+
+class PacketBeaconPayload():
+    def __init__(self, payload) :
+        self.payload = payload
+
+    @staticmethod
+    def parse(payload):
+        return PacketBeaconPayload(payload[:35])
+    
+    def encode(self):
+        return self.payload
+    
+    def __str__(self) -> str:
+        return f"Beacon: {self.payload.hex()}"
+
+class PacketShootPayload():
+    def __init__(self, name_size, name, payload) :
+        self.payload = payload
+        self.name_size = name_size
+        self.name = name
+
+    @staticmethod
+    def parse(payload):
+        name_size = int.from_bytes(payload[:2], 'little')
+        name = ''.join(chr(x) for x in payload[2:2+name_size])
+        other = payload[2+name_size:2+name_size+12]
+        return PacketShootPayload(name_size,name,other)
+    
+    def encode(self):
+        return self.name_size.to_bytes(2, "little") + self.name.encode() + self.payload
+    
+    def __str__(self) -> str:
+        return f"Shoot Arme:{self.name} Data:{self.payload.hex()}"
 
 class ChgmtOutilPayload():
     def __init__(self, nb) :
@@ -108,7 +160,7 @@ class ChgmtOutilPayload():
         return ChgmtOutilPayload((payload[0]+1)%10)
     
     def encode(self):
-        return self.payload
+        return self.nb.to_bytes(1,'big')
     
     def __str__(self) -> str:
         return f"Chgmt outil: {self.nb}"
@@ -167,6 +219,26 @@ class PositionPacket(Packet):
         payload = PacketPositionPayload.parse(packet[Packet.HEADER_SIZE:])
         return PositionPacket(header, payload)
 
+@packet_type(0x7073)
+class EnemyPosPacket(Packet):
+    TYPE = 0x7073
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketEnemyPosPayload.parse(packet[Packet.HEADER_SIZE:])
+        return EnemyPosPacket(header, payload)
+
+@packet_type(0x1703)
+class BeaconPacket(Packet):
+    TYPE = 0x1703 
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketBeaconPayload.parse(packet[Packet.HEADER_SIZE:])
+        return BeaconPacket(header, payload)
+
 @packet_type(0x6a70)
 class JumpPacket(Packet):
     TYPE = 0x6a70
@@ -187,6 +259,16 @@ class ChgmtOutil(Packet):
         payload = ChgmtOutilPayload.parse(packet[Packet.HEADER_SIZE:])
         return ChgmtOutil(header, payload)
 
+@packet_type(0x726c)
+class ReloadPacket(Packet):
+    TYPE = 0x726c
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketReloadPayload.parse(packet[Packet.HEADER_SIZE:])
+        return ReloadPacket(header, payload)
+
 @packet_type(0x2a69)
 class ShootPacket(Packet):
     TYPE = 0x2a69
@@ -198,13 +280,15 @@ class ShootPacket(Packet):
         return ShootPacket(header, payload)
 
 def parse(data, port, type):
-    pkt = Packet.parse(data)
-    # if type == 'client' and pkt.header.type == ShootPacket.TYPE:
-    #     print(f"[{port}] {pkt}")
-    if type == 'server' and pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:
-        print(f"[{port}] {pkt}")
+    while len(data) != 0:
+        pkt = Packet.parse(data)
+        data = data[len(pkt.encode()):]
+        # if type == 'client' and pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:
+        #     print(f"[{port}] {pkt}")
+        if type == 'server' and pkt.header.type != PositionPacket.TYPE:
+            print(f"[{port}] {pkt}")
 
 if __name__ == "__main__":
-    pkt = Packet.parse(bytes.fromhex("6e76b8001ac75bf6afc66774324589ff02aa00008100"))
+    pkt = Packet.parse(bytes.fromhex("7073a50d0000832c49c6f57402c776b832450000c472000068ff330000007073a60d00002aeac7c5556908c74bb12e450000d4530000b5ff8d0000007073a70d0000addffbc5d99622c727244e450000388a00000000000000007073a80d00004e6108c3099323c75e9a1a450000c03e00000500a00000007073a90d0000767a014547e20bc714aa1145000070d7000057007aff00006d76a20d00003b5fc2c6ea7de3c6241c2545e7fffffffcf17073a30d0000d6b0b1c6f1c2d5c67e382e4500003c800000c0fefeff00007073a40d000006c5cbc6984511c7a27e43450000e9b80000e4ff62ff00000000"))
 
     print(pkt)

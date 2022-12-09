@@ -88,7 +88,7 @@ if __name__ == "__main__":
         print(f"Usage: python3 {sys.argv[0]} <server ip>")
     else:
         SERVER_IP = sys.argv[1]
-    
+    SERVER_IP = 'pentest.hackutt.uttnetgroup.fr'    
     MASTER_PORT = 3333
 
     
