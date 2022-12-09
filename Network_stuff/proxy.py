@@ -1,12 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-Authors: Dvorhack & K8pl3r
-
-This file is aimed to provide a tcp proxy for different ports
-"""
-
+import socket, os, Protocol_Parser, sys
 from threading import Thread
 import os
 import socket
