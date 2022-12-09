@@ -15,5 +15,6 @@ Put the ip of the computer which will run the proxy in the local DNS of your com
 With `<ip>` the ip of the proxy
 
 Run the proxy with python 3: `python3 proxy.py`
+You can also: `chmod +x proxy.py` and `./proxy.py`
 
 Enjoy your proxy :)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import socket, os, Protocol_Parser, sys
 from threading import Thread
 import importlib
