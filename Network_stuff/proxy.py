@@ -89,6 +89,8 @@ if __name__ == "__main__":
     else:
         SERVER_IP = sys.argv[1]
     
+    SERVER_IP = 'pentest.hackutt.uttnetgroup.fr'
+    
     MASTER_PORT = 3333
 
     
