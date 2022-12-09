@@ -108,7 +108,8 @@ class PacketEnemyPosPayload():
     
     def encode(self):
         return pack("Ifff", self.id, self.X, self.Y, self.Z) + self.payload
-    
+
+   
     def __str__(self) -> str:
         return f"EnemyPos: ID:{self.id} {self.X} / {self.Y} / {self.Z} {self.payload[:10].hex()} ..."
 
@@ -186,6 +187,7 @@ class ChangeToolPayload():
         return f"Change Tool: {self.nb}"
 
 class JumpPacketPayload():
+    '''Jump packet payload'''
     def __init__(self, action) :
         self.action = action
 
@@ -207,6 +209,7 @@ class JumpPacketPayload():
 
 
 class PacketBurstPayload():
+    '''Burst packet to inform of the start and end of a burst'''
     def __init__(self, action) :
         self.action = action
 
@@ -220,6 +223,39 @@ class PacketBurstPayload():
     
     def __str__(self) -> str:
         return f"Burst : {self.action}"
+
+
+class PacketShootServerPayload():
+    '''Shoot packet from the server payload'''
+    def __init__(self, payload) :
+        self.payload = payload
+
+    @staticmethod
+    def parse(payload):
+        return PacketShootServerPayload(payload)
+    
+    def encode(self):
+        return self.payload
+    
+    def __str__(self) -> str:
+        return f"ShootServer: {self.payload.hex()}"
+
+
+class PacketHPmodifPayload():
+    '''Heqlth Point packet'''
+    def __init__(self, payload) :
+        self.payload = payload
+
+    @staticmethod
+    def parse(payload):
+        return PacketHPmodifPayload(payload)
+    
+    def encode(self):
+        return self.payload
+    
+    def __str__(self) -> str:
+        return f"HP modification: {self.payload.hex()}"
+
 
 
 class Packet:
@@ -330,16 +366,39 @@ class BurstPacket(Packet):
         return BurstPacket(header, payload)
 
 
+@packet_type(0x6c61)
+class PacketShootServer(Packet):
+    TYPE = 0x6c61
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketShootServerPayload.parse(packet[Packet.HEADER_SIZE:])
+        return PacketShootServer(header, payload)
+
+@packet_type(0x2b2b)
+class HPmodifPacket(Packet):
+    TYPE = 0x2b2b
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketHPmodifPayload.parse(packet[Packet.HEADER_SIZE:])
+        return HPmodifPacket(header, payload)
+
+
 def parse(data, port, type):
     if data == b'\x00\x00':
         return
     while len(data) != 0 :
         pkt = Packet.parse(data)
         data = data[len(pkt.encode()):]
-        if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # known packets
+        # if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # unknown packets
+        #   print(f"[{type}] {pkt}")
+        blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
+        whitelist = []
+        if pkt.header.type not in blacklist: # do not show blacklisted packets
            print(f"[{type}] {pkt}")
-        if type == 'client' and (pkt.header.type != PositionPacket.TYPE and pkt.header.type != BeaconPacket.TYPE): # unknown packets
-           print(f"[{port}] {pkt}")
 
 if __name__ == "__main__":
     pkt = Packet.parse(bytes.fromhex("7073a50d0000832c49c6f57402c776b832450000c472000068ff330000007073a60d00002aeac7c5556908c74bb12e450000d4530000b5ff8d0000007073a70d0000addffbc5d99622c727244e450000388a00000000000000007073a80d00004e6108c3099323c75e9a1a450000c03e00000500a00000007073a90d0000767a014547e20bc714aa1145000070d7000057007aff00006d76a20d00003b5fc2c6ea7de3c6241c2545e7fffffffcf17073a30d0000d6b0b1c6f1c2d5c67e382e4500003c800000c0fefeff00007073a40d000006c5cbc6984511c7a27e43450000e9b80000e4ff62ff00000000"))
