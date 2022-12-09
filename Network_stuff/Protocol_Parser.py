@@ -134,7 +134,7 @@ class PacketBeaconPayload():
 
 class PacketShootPayload():
     def __init__(self, name_size, name, payload) :
-        self.payload = payload
+        self.payload = payload # on ne sait pas ce que c'est 
         self.name_size = name_size
         self.name = name
 
@@ -184,6 +184,23 @@ class JumpPacketPayload():
     
     def __str__(self) -> str:
         return f"Jump: {self.action}"
+
+
+class PacketSalvePayload():
+    def __init__(self, action) :
+        self.action = action
+
+    @staticmethod
+    def parse(payload):
+        action = payload[0]
+        return PacketSalvePayload(action)
+    
+    def encode(self):
+        return self.action.to_bytes(1, "little")
+    
+    def __str__(self) -> str:
+        return f"Salve : {self.action}"
+
 
 class Packet:
     HEADER_SIZE = 2
@@ -279,13 +296,25 @@ class ShootPacket(Packet):
         payload = PacketShootPayload.parse(packet[Packet.HEADER_SIZE:])
         return ShootPacket(header, payload)
 
+
+@packet_type(0x6672)
+class SalvePacket(Packet):
+    TYPE = 0x6672
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketSalvePayload.parse(packet[Packet.HEADER_SIZE:])
+        return SalvePacket(header, payload)
+
+
 def parse(data, port, type):
     while len(data) != 0:
         pkt = Packet.parse(data)
         data = data[len(pkt.encode()):]
         # if type == 'client' and pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:
         #     print(f"[{port}] {pkt}")
-        if type == 'server' and pkt.header.type != PositionPacket.TYPE:
+        if type == 'client' and (pkt.header.type != PositionPacket.TYPE and pkt.header.type != BeaconPacket.TYPE):
             print(f"[{port}] {pkt}")
 
 if __name__ == "__main__":
