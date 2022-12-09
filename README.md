@@ -18,10 +18,10 @@ Surement reverse
 - Ile vache
 
 ### Flags officiels
-- Unbearable Revenge
-- Until the Cows Come Home
+- Unbearable Revenge (Bears)
+- Until the Cows Come Home (Cow)
 - Overachiever
-- Egg Hunter
+- Egg Hunter (Find 10 eggs)
 - Pirate's Treasure
-- Fire and Ice
-- Blocky's Revenge
+- Fire and Ice (Ragmarock)
+- Blocky's Revenge (Maze solver)
