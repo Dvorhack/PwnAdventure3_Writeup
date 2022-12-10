@@ -13,7 +13,9 @@ import os
 import socket
 import sys
 import importlib
+import customtkinter
 import Protocol_Parser
+import gui
 
 
 class Proxy(Thread):
@@ -184,6 +186,9 @@ if __name__ == "__main__":
         print(f"Usage: python3 {sys.argv[0]} <server ip>")
     else:
         SERVER_IP = sys.argv[1]
+
+    GUI = bool("--gui" in sys.argv)
+
     SERVER_IP = 'pentest.hackutt.uttnetgroup.fr'
     MASTER_PORT = 3333
 
@@ -196,10 +201,14 @@ if __name__ == "__main__":
         _game_server.start()
         game_servers.append(_game_server)
 
-    while True:
-        try:
-            cmd = input('$ ')
-            if cmd[:4] == 'quit':
-                os.exit(0)
-        except Exception as err:
-            print(err)
+    if GUI:
+        root = gui.MainWin()
+        root.mainloop()
+    else:
+        while True:
+            try:
+                cmd = input('$ ')
+                if cmd[:4] == 'quit':
+                    os.exit(0)
+            except Exception as err:
+                print(err)

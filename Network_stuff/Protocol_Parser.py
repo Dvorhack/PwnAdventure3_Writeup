@@ -387,7 +387,7 @@ class HPmodifPacket(Packet):
         return HPmodifPacket(header, payload)
 
 
-def parse(data, port, type):
+def parse(data, port, type, window_text = None):
     if data == b'\x00\x00':
         return
     while len(data) != 0 :
@@ -397,8 +397,15 @@ def parse(data, port, type):
         #   print(f"[{type}] {pkt}")
         blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
         whitelist = []
-        if pkt.header.type not in blacklist: # do not show blacklisted packets
-           print(f"[{type}] {pkt}")
+
+        condition = pkt.header.type not in blacklist
+
+        if condition: # do not show blacklisted packets
+            txt = f"[{type}] {pkt}"
+            if window_text is not None:
+                window_text.insert(txt)
+            else:
+                print(txt)
 
 if __name__ == "__main__":
     pkt = Packet.parse(bytes.fromhex("7073a50d0000832c49c6f57402c776b832450000c472000068ff330000007073a60d00002aeac7c5556908c74bb12e450000d4530000b5ff8d0000007073a70d0000addffbc5d99622c727244e450000388a00000000000000007073a80d00004e6108c3099323c75e9a1a450000c03e00000500a00000007073a90d0000767a014547e20bc714aa1145000070d7000057007aff00006d76a20d00003b5fc2c6ea7de3c6241c2545e7fffffffcf17073a30d0000d6b0b1c6f1c2d5c67e382e4500003c800000c0fefeff00007073a40d000006c5cbc6984511c7a27e43450000e9b80000e4ff62ff00000000"))
