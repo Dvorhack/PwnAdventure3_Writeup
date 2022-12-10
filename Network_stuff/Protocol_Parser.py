@@ -147,10 +147,11 @@ class PacketPlayerStatePayload():
         id = int.from_bytes(payload[:4],'little')
         name_len = int.from_bytes(payload[4:6],'little')
         name = payload[6:6+name_len].decode()
+
         return PacketPlayerStatePayload(id, name_len, name)
     
     def encode(self):
-        return self.id.to_bytes(4,'little') + self.name_len.to_bytes(2, 'little') + self.name.encode() + b"\x00"
+        return self.id.to_bytes(4,'little') + self.name_len.to_bytes(2, 'little') + self.name.encode() + b'\x00'
     
     def __str__(self) -> str:
         return f"Player change state:  {self.id} {self.name}"
@@ -387,18 +388,21 @@ class PacketShootServerPayload():
 
 class PacketHPmodifPayload():
     '''Health Point packet'''
-    def __init__(self, payload) :
-        self.payload = payload
+    def __init__(self, id, level) :
+        self.id = id
+        self.level = level
 
     @staticmethod
     def parse(payload):
-        return PacketHPmodifPayload(payload)
+        id = int.from_bytes(payload[:4],'little')
+        level = int.from_bytes(payload[4:8],'little')
+        return PacketHPmodifPayload(id, level)
     
     def encode(self):
-        return self.payload
+        return self.id.to_bytes(4,'little') + self.level.to_bytes(4,'little')
     
     def __str__(self) -> str:
-        return f"HP modification: {self.payload.hex()}"
+        return f"HP modification: {self.id} {self.level}"
 
 
 class PacketSellPayload():
