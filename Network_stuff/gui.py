@@ -17,24 +17,26 @@ class LogFrame(customtkinter.CTkFrame):
     def __init__(self, *args, header_name="RadioButtonFrame", **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.activate_filter = False
+
         self.header_name = header_name
 
         self.header = customtkinter.CTkLabel(self, text=self.header_name)
 
         # create 2x2 grid system
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure((0, 1,2), weight=1)
+        self.grid_columnconfigure((0), weight=1)
 
         # Textbox for displaying logs
         self.textbox = customtkinter.CTkTextbox(master=self)
         self.textbox.grid(row=0, column=0, columnspan=3, padx=10, pady=(20, 0), sticky="nsew")
 
         # Combobox for defautl filters
-        self.combobox = customtkinter.CTkComboBox(master=self, values=["Sample text 1", "Text 2"])
+        self.combobox = customtkinter.CTkComboBox(master=self, values=Protocol_Parser.FILTERS)
         self.combobox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         # Button for filtering
-        self.button = customtkinter.CTkButton(master=self, command=self.button_callback, text="Filter")
+        self.button = customtkinter.CTkButton(master=self, command=self.button_callback, text="Filter down", fg_color="red", hover=False)
         self.button.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
 
         # Button activate filter / reload filters
@@ -44,6 +46,12 @@ class LogFrame(customtkinter.CTkFrame):
     def button_callback(self):
         """Callback when button pressed"""
         self.textbox.insert("insert", self.combobox.get() + "\n")
+        if self.activate_filter:
+            self.button.configure(fg_color="red", text="Filter down")
+            self.activate_filter = False
+        else:
+            self.button.configure(fg_color="green", text="Filter activated")
+            self.activate_filter = True
     
     def active_filter_callback(self):
         """Activate filter callback"""

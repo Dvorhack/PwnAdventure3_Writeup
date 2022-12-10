@@ -62,7 +62,7 @@ class PacketHeader():
         return pack('>H', self.type)
     
     def __str__(self) -> str:
-        return f"CMD: 0x{self.type:x}"
+        return f"0x{self.type:x}"
 
 
 class PacketPositionPayload():
@@ -458,9 +458,18 @@ class XchangePacket(Packet):
         payload = PacketXchangePayload.parse(packet[Packet.HEADER_SIZE:])
         return XchangePacket(header, payload)
 
-FILTERS = ['unknown']
+FILTERS_DICT = {
+    'Show only unknown': 'pkt.header.type not in PacketRegistry.TYPE_TO_CLASS',
+    'Whitelist': 'pkt.header.type in whitelist',
+    'Blacklist': 'pkt.header.type not in blacklist'
+}
 
-def parse(data, conn_dir, window_text = None):
+blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
+whitelist = [BeaconPacket.TYPE]
+
+FILTERS = list(FILTERS_DICT.keys())
+
+def parse(data, conn_dir, window_text = None, filter_selected = None):
     """Parse packet"""
     if data == b'\x00\x00':
         return
@@ -469,10 +478,11 @@ def parse(data, conn_dir, window_text = None):
         data = data[len(pkt.encode()):]
         # if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # unknown packets
         #   print(f"[{conn_dir}] {pkt}")
-        blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
-        whitelist = []
-
-        condition = pkt.header.type not in blacklist
+        
+        if filter_selected is not None:
+            condition = eval(FILTERS_DICT[filter_selected])
+        else:
+            condition = True
 
         if condition: # do not show blacklisted packets
             txt = f"[{conn_dir}] {pkt}\n"

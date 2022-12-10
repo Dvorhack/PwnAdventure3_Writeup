@@ -126,7 +126,10 @@ class Client2Proxy(Thread):
                     if not GUI:
                         Protocol_Parser.parse(data, 'client')
                     else:
-                        Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
+                        if root.log_frame.activate_filter:
+                            Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox, filter_selected=root.log_frame.combobox.get())
+                        else:
+                            Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
 
                 # Then, send data to real server
                 self.server.sendall(data)
@@ -182,15 +185,18 @@ class Proxy2Server(Thread):
                     if not GUI:
                         Protocol_Parser.parse(data, 'client')
                     else:
-                        Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
+                        if root.log_frame.activate_filter:
+                            Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox, filter_selected=root.log_frame.combobox.get())
+                        else:
+                            Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
 
                 # Then, send data to real server
                 self.client.sendall(data)
             except ConnectionError as conn_err:
-                print('client[{self.port}]', conn_err)
+                print(f'client[{self.port}]', conn_err)
                 break
             except Exception as o_err:
-                print('client[{self.port}]', o_err)
+                print(f'client[{self.port}]', o_err)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
