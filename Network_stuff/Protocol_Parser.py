@@ -242,7 +242,7 @@ class PacketShootServerPayload():
 
 
 class PacketHPmodifPayload():
-    '''Heqlth Point packet'''
+    '''Health Point packet'''
     def __init__(self, payload) :
         self.payload = payload
 
@@ -257,6 +257,58 @@ class PacketHPmodifPayload():
         return f"HP modification: {self.payload.hex()}"
 
 
+class PacketSellPayload():
+    '''Sell on object packet'''
+    def __init__(self, id, lenght_name, name, quantity) :
+        self.id = id
+        self.lenght_name = lenght_name
+        self.name = name
+        self.quantity = quantity
+
+    @staticmethod
+    def parse(payload):
+        id = int.from_bytes(payload[0:4], 'little')
+        lenght_name = int.from_bytes(payload[4:6], 'little')
+        name = payload[6:lenght_name + 6].decode()
+        quantity = int.from_bytes(payload[lenght_name + 6: lenght_name + 10], 'little')
+
+        
+        return PacketSellPayload(id, lenght_name, name, quantity)
+    
+    def encode(self):
+        return self.id.to_bytes(4, "little") + self.lenght_name.to_bytes(2, "little") + self.name.encode() + self.quantity.to_bytes(4, "little")
+    
+    def __str__(self) -> str:
+        return f"Sell: id {self.id} {self.name} {self.quantity}"
+
+class PacketXchangePayload():
+    ''' Exchange packet after buying or selling an object'''
+    def __init__(self, lenght_name, name, quantity, data, lenghtxname, xname, coins) :
+        self.lenght_name = lenght_name
+        self.name = name
+        self.quantity = quantity
+        self.data = data
+        self.lenghtxname = lenghtxname
+        self.xname = xname
+        self.coins = coins
+
+
+    @staticmethod
+    def parse(payload):
+        lenght_name = int.from_bytes(payload[0:2], "little")
+        name = payload[2:lenght_name + 2].decode()
+        quantity = int.from_bytes(payload[lenght_name + 2: lenght_name + 6], 'little')
+        data = payload[lenght_name + 6: lenght_name + 8]
+        lenghtxname = int.from_bytes(payload[lenght_name + 8: lenght_name + 10], 'little')
+        xname = payload[lenght_name + 10:lenghtxname + lenght_name + 10].decode()
+        coins = int.from_bytes(payload[lenghtxname + lenght_name + 10: lenghtxname + lenght_name + 16], 'little')
+        return PacketXchangePayload(lenght_name, name, quantity, data, lenghtxname, xname, coins)
+    
+    def encode(self):
+        return self.lenght_name.to_bytes(2, "little") + self.name.encode() + self.quantity.to_bytes(4, "little") + self.data + self.lenghtxname.to_bytes(2, "little") + self.xname.encode() + self.coins.to_bytes(6, "little")
+    
+    def __str__(self) -> str:
+        return f"Xchange: {self.name} {self.quantity} {self.xname} {self.coins}"
 
 class Packet:
     HEADER_SIZE = 2
@@ -385,6 +437,26 @@ class HPmodifPacket(Packet):
         header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
         payload = PacketHPmodifPayload.parse(packet[Packet.HEADER_SIZE:])
         return HPmodifPacket(header, payload)
+
+@packet_type(0x2473)
+class SellPacket(Packet):
+    TYPE = 0x2473
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketSellPayload.parse(packet[Packet.HEADER_SIZE:])
+        return SellPacket(header, payload)
+
+@packet_type(0x726d)
+class XchangePacket(Packet):
+    TYPE = 0x726d
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketXchangePayload.parse(packet[Packet.HEADER_SIZE:])
+        return XchangePacket(header, payload)
 
 
 def parse(data, port, type, window_text = None):
