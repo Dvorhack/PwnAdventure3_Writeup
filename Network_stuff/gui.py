@@ -91,7 +91,8 @@ class MainWin(customtkinter.CTk):
         self.state('zoomed')
 
         # Create 2X1 grid
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(1, weight=2)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         self.log_frame = LogFrame(self, header_name="RadioButtonFrame 1")
