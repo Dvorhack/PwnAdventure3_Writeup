@@ -50,7 +50,7 @@ GRENADE 7875
 [server] CMD: 0x726d Unknown payload: 0f00486f6c7948616e644772656e6164650100000063700400436f696ec31e00000000
 
 REVOLVER 1875
-										(id)  (lenght name) (name)           (qte)      (data?)
+										(id)  (lenght name) (name)           (qte)      (position packet)
 [client] CMD: 0x2473 Unknown payload: 07000000 0b00 436f77626f79436f646572 01000000  6d76e2e212c79c0f8dc666221d45a7f86efc00000000
 								(lenght name)  (name)              (qte)    (???)    (lenght xch name) (xchange name)    (coins)  (other coins on an int)
 [server] CMD: 0x726d Unknown payload: 0b00 436f77626f79436f646572 01000000 6370    0400  436f696e 5307  00000000
