@@ -1,3 +1,11 @@
+## Fort Blox
+Press button to open the door
+[client] CMD: 0x3031 Unknown payload: 0a0046696e616c5374616765203f0f006d7652912ec6eed90cc567f20d4599ea576e00000000
+[server] CMD: 0x3031 Unknown payload: 0a0046696e616c5374616765203f0f00ae00fc5b004224d483c160303c6340006d3885d9e676bd2d0000
+[client] CMD: 0x3031 Unknown payload: 0a0046696e616c5374616765213f0f006d7652912ec6eed90cc567f20d45bbeb6c6c00000000
+[server] CMD: 0x3031 Unknown payload: 0a0046696e616c5374616765213f0f00ae00fc5b804224d483c160303c6740006d3885d9e6763d2e0000
+
+
 
 ## Server fight
 [server] CMD: 0x6c61 shoot sth: 0600506973746f6c100000000000
@@ -42,7 +50,7 @@ GRENADE 7875
 [server] CMD: 0x726d Unknown payload: 0f00486f6c7948616e644772656e6164650100000063700400436f696ec31e00000000
 
 REVOLVER 1875
-										(id)  (lenght name) (name)           (qte)      (data?)
+										(id)  (lenght name) (name)           (qte)      (position packet)
 [client] CMD: 0x2473 Unknown payload: 07000000 0b00 436f77626f79436f646572 01000000  6d76e2e212c79c0f8dc666221d45a7f86efc00000000
 								(lenght name)  (name)              (qte)    (???)    (lenght xch name) (xchange name)    (coins)  (other coins on an int)
 [server] CMD: 0x726d Unknown payload: 0b00 436f77626f79436f646572 01000000 6370    0400  436f696e 5307  00000000

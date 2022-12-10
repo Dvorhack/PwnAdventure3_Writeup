@@ -1,5 +1,7 @@
-from struct import unpack, pack
+#!/usr/bin/env python3
 
+from struct import unpack, pack
+from tkinter import END
 
 class PacketDefaultPayload():
     # class template tu use for a new object
@@ -60,7 +62,7 @@ class PacketHeader():
         return pack('>H', self.type)
     
     def __str__(self) -> str:
-        return f"CMD: 0x{self.type:x}"
+        return f"0x{self.type:x}"
 
 
 class PacketPositionPayload():
@@ -106,7 +108,8 @@ class PacketEnemyPosPayload():
     
     def encode(self):
         return pack("Ifff", self.id, self.X, self.Y, self.Z) + self.payload
-    
+
+   
     def __str__(self) -> str:
         return f"EnemyPos: ID:{self.id} {self.X} / {self.Y} / {self.Z} {self.payload[:10].hex()} ..."
 
@@ -184,6 +187,7 @@ class ChangeToolPayload():
         return f"Change Tool: {self.nb}"
 
 class JumpPacketPayload():
+    '''Jump packet payload'''
     def __init__(self, action) :
         self.action = action
 
@@ -205,6 +209,7 @@ class JumpPacketPayload():
 
 
 class PacketBurstPayload():
+    '''Burst packet to inform of the start and end of a burst'''
     def __init__(self, action) :
         self.action = action
 
@@ -219,6 +224,91 @@ class PacketBurstPayload():
     def __str__(self) -> str:
         return f"Burst : {self.action}"
 
+
+class PacketShootServerPayload():
+    '''Shoot packet from the server payload'''
+    def __init__(self, payload) :
+        self.payload = payload
+
+    @staticmethod
+    def parse(payload):
+        return PacketShootServerPayload(payload)
+    
+    def encode(self):
+        return self.payload
+    
+    def __str__(self) -> str:
+        return f"ShootServer: {self.payload.hex()}"
+
+
+class PacketHPmodifPayload():
+    '''Health Point packet'''
+    def __init__(self, payload) :
+        self.payload = payload
+
+    @staticmethod
+    def parse(payload):
+        return PacketHPmodifPayload(payload)
+    
+    def encode(self):
+        return self.payload
+    
+    def __str__(self) -> str:
+        return f"HP modification: {self.payload.hex()}"
+
+
+class PacketSellPayload():
+    '''Sell on object packet'''
+    def __init__(self, id, lenght_name, name, quantity) :
+        self.id = id
+        self.lenght_name = lenght_name
+        self.name = name
+        self.quantity = quantity
+
+    @staticmethod
+    def parse(payload):
+        id = int.from_bytes(payload[0:4], 'little')
+        lenght_name = int.from_bytes(payload[4:6], 'little')
+        name = payload[6:lenght_name + 6].decode()
+        quantity = int.from_bytes(payload[lenght_name + 6: lenght_name + 10], 'little')
+
+        
+        return PacketSellPayload(id, lenght_name, name, quantity)
+    
+    def encode(self):
+        return self.id.to_bytes(4, "little") + self.lenght_name.to_bytes(2, "little") + self.name.encode() + self.quantity.to_bytes(4, "little")
+    
+    def __str__(self) -> str:
+        return f"Sell: id {self.id} {self.name} {self.quantity}"
+
+class PacketXchangePayload():
+    ''' Exchange packet after buying or selling an object'''
+    def __init__(self, lenght_name, name, quantity, data, lenghtxname, xname, coins) :
+        self.lenght_name = lenght_name
+        self.name = name
+        self.quantity = quantity
+        self.data = data
+        self.lenghtxname = lenghtxname
+        self.xname = xname
+        self.coins = coins
+
+
+    @staticmethod
+    def parse(payload):
+        lenght_name = int.from_bytes(payload[0:2], "little")
+        name = payload[2:lenght_name + 2].decode()
+        quantity = int.from_bytes(payload[lenght_name + 2: lenght_name + 6], 'little')
+        data = payload[lenght_name + 6: lenght_name + 8]
+        lenghtxname = int.from_bytes(payload[lenght_name + 8: lenght_name + 10], 'little')
+        xname = payload[lenght_name + 10:lenghtxname + lenght_name + 10].decode()
+        coins = int.from_bytes(payload[lenghtxname + lenght_name + 10: lenghtxname + lenght_name + 16], 'little')
+        return PacketXchangePayload(lenght_name, name, quantity, data, lenghtxname, xname, coins)
+    
+    def encode(self):
+        return self.lenght_name.to_bytes(2, "little") + self.name.encode() + self.quantity.to_bytes(4, "little") + self.data + self.lenghtxname.to_bytes(2, "little") + self.xname.encode() + self.coins.to_bytes(6, "little")
+    
+    def __str__(self) -> str:
+        return f"Xchange: {self.name} {self.quantity} {self.xname} {self.coins}"
 
 class Packet:
     HEADER_SIZE = 2
@@ -328,16 +418,79 @@ class BurstPacket(Packet):
         return BurstPacket(header, payload)
 
 
-def parse(data, port, type):
+@packet_type(0x6c61)
+class PacketShootServer(Packet):
+    TYPE = 0x6c61
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketShootServerPayload.parse(packet[Packet.HEADER_SIZE:])
+        return PacketShootServer(header, payload)
+
+@packet_type(0x2b2b)
+class HPmodifPacket(Packet):
+    TYPE = 0x2b2b
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketHPmodifPayload.parse(packet[Packet.HEADER_SIZE:])
+        return HPmodifPacket(header, payload)
+
+@packet_type(0x2473)
+class SellPacket(Packet):
+    TYPE = 0x2473
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketSellPayload.parse(packet[Packet.HEADER_SIZE:])
+        return SellPacket(header, payload)
+
+@packet_type(0x726d)
+class XchangePacket(Packet):
+    TYPE = 0x726d
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketXchangePayload.parse(packet[Packet.HEADER_SIZE:])
+        return XchangePacket(header, payload)
+
+FILTERS_DICT = {
+    'Show only unknown': 'pkt.header.type not in PacketRegistry.TYPE_TO_CLASS',
+    'Whitelist': 'pkt.header.type in whitelist',
+    'Blacklist': 'pkt.header.type not in blacklist'
+}
+
+blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
+whitelist = [BeaconPacket.TYPE]
+
+FILTERS = list(FILTERS_DICT.keys())
+
+def parse(data, conn_dir, window_text = None, filter_selected = None):
+    """Parse packet"""
     if data == b'\x00\x00':
         return
     while len(data) != 0 :
         pkt = Packet.parse(data)
         data = data[len(pkt.encode()):]
-        if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # known packets
-           print(f"[{type}] {pkt}")
-        if type == 'client' and (pkt.header.type != PositionPacket.TYPE and pkt.header.type != BeaconPacket.TYPE): # unknown packets
-           print(f"[{port}] {pkt}")
+        # if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # unknown packets
+        #   print(f"[{conn_dir}] {pkt}")
+        
+        if filter_selected is not None:
+            condition = eval(FILTERS_DICT[filter_selected])
+        else:
+            condition = True
+
+        if condition: # do not show blacklisted packets
+            txt = f"[{conn_dir}] {pkt}\n"
+            if window_text is not None:
+                window_text.insert(END,txt)
+                window_text.see(END)
+            else:
+                print(txt)
 
 if __name__ == "__main__":
     pkt = Packet.parse(bytes.fromhex("7073a50d0000832c49c6f57402c776b832450000c472000068ff330000007073a60d00002aeac7c5556908c74bb12e450000d4530000b5ff8d0000007073a70d0000addffbc5d99622c727244e450000388a00000000000000007073a80d00004e6108c3099323c75e9a1a450000c03e00000500a00000007073a90d0000767a014547e20bc714aa1145000070d7000057007aff00006d76a20d00003b5fc2c6ea7de3c6241c2545e7fffffffcf17073a30d0000d6b0b1c6f1c2d5c67e382e4500003c800000c0fefeff00007073a40d000006c5cbc6984511c7a27e43450000e9b80000e4ff62ff00000000"))
