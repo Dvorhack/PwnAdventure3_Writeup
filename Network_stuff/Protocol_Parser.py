@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from struct import unpack, pack
-
+from tkinter import END
 
 class PacketDefaultPayload():
     # class template tu use for a new object
@@ -458,24 +458,27 @@ class XchangePacket(Packet):
         payload = PacketXchangePayload.parse(packet[Packet.HEADER_SIZE:])
         return XchangePacket(header, payload)
 
+FILTERS = ['unknown']
 
-def parse(data, port, type, window_text = None):
+def parse(data, conn_dir, window_text = None):
+    """Parse packet"""
     if data == b'\x00\x00':
         return
     while len(data) != 0 :
         pkt = Packet.parse(data)
         data = data[len(pkt.encode()):]
         # if pkt.header.type not in PacketRegistry.TYPE_TO_CLASS:  # type == 'client' and  # unknown packets
-        #   print(f"[{type}] {pkt}")
+        #   print(f"[{conn_dir}] {pkt}")
         blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
         whitelist = []
 
         condition = pkt.header.type not in blacklist
 
         if condition: # do not show blacklisted packets
-            txt = f"[{type}] {pkt}"
+            txt = f"[{conn_dir}] {pkt}\n"
             if window_text is not None:
-                window_text.insert(txt)
+                window_text.insert(END,txt)
+                window_text.see(END)
             else:
                 print(txt)
 

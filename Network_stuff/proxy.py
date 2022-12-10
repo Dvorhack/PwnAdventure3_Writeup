@@ -7,15 +7,17 @@ Authors: Dvorhack & K8pl3r
 This file is aimed to provide a tcp proxy for different ports
 """
 
-import socket, os, Protocol_Parser, sys
 from threading import Thread
+from tkinter import END
 import os
 import socket
 import sys
 import importlib
-import customtkinter
 import Protocol_Parser
 import gui
+
+GUI = False
+root = None
 
 
 class Proxy(Thread):
@@ -58,7 +60,10 @@ class Proxy(Thread):
         Main loop of Thread
         """
         while True:
-            print(f"[proxy({self.port})] setting up")
+            if GUI:
+                root.log_frame.textbox.insert("0.0",f"[proxy({self.port})] setting up\n")
+            else:
+                print(f"[proxy({self.port})] setting up")
             # Wait for a client to connect
             self.c2p = Client2Proxy(self.from_host, self.port)
             self.p2s = Proxy2Server(self.to_host, self.port)
@@ -118,7 +123,10 @@ class Client2Proxy(Thread):
 
                     # Reload the parser in order to be dynamic
                     importlib.reload(Protocol_Parser)
-                    Protocol_Parser.parse(data, self.port, 'client')
+                    if not GUI:
+                        Protocol_Parser.parse(data, 'client')
+                    else:
+                        Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
 
                 # Then, send data to real server
                 self.server.sendall(data)
@@ -171,7 +179,10 @@ class Proxy2Server(Thread):
                     #print(f"[{self.port}] <- {data[:100].hex()}")
 
                     importlib.reload(Protocol_Parser)
-                    Protocol_Parser.parse(data, self.port, 'server')
+                    if not GUI:
+                        Protocol_Parser.parse(data, 'client')
+                    else:
+                        Protocol_Parser.parse(data, 'client',window_text=root.log_frame.textbox)
 
                 # Then, send data to real server
                 self.client.sendall(data)
@@ -189,6 +200,9 @@ if __name__ == "__main__":
 
     GUI = bool("--gui" in sys.argv)
 
+    if GUI:
+        root = gui.MainWin()
+
     SERVER_IP = 'pentest.hackutt.uttnetgroup.fr'
     MASTER_PORT = 3333
 
@@ -202,7 +216,6 @@ if __name__ == "__main__":
         game_servers.append(_game_server)
 
     if GUI:
-        root = gui.MainWin()
         root.mainloop()
     else:
         while True:
