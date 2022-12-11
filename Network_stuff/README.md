@@ -1,4 +1,12 @@
-# Proxy
+# Installation
+
+`pip install -r ./PwnAdventure3_Writeup/requirements.txt` to install dependencies
+
+You can install the client of the game on this URL: https://www.pwnadventure.com/
+
+You must edit the `/PwnAdventure3/Content/Server/server.ini` and add for the master server `master_docker.pwn3` as hostname and `game.pwn3` for the game server hostname
+
+# Network_stuff: Proxy
 
 The proxy allows you to see the packets sent to and from the server.
 
