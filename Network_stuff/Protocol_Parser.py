@@ -18,6 +18,47 @@ class PacketDefaultPayload():
     def __str__(self) -> str:
         return f"Unknown payload: {self.payload.hex()}"
 
+class PacketNewInventoryPayload():
+    # class template tu use for a new object
+    def __init__(self, name_len, name, qty) :
+        self.name_len = name_len
+        self.name = name
+        self.quantity = qty
+
+    @staticmethod
+    def parse(payload):
+        name_len = int.from_bytes(payload[:2], 'little')
+        name = payload[2:2+name_len].decode()
+        qty = int.from_bytes(payload[2+name_len:2+name_len+4],'little')
+        return PacketNewInventoryPayload(name_len, name, qty)
+    
+    def encode(self):
+        return self.name_len.to_bytes(2, 'little') + self.name.encode() + self.quantity.to_bytes(4,'little')
+    
+    def __str__(self) -> str:
+        return f"New inventory: {self.name} {self.quantity}"
+
+class PacketAttackStatePayload():
+    # class template tu use for a new object
+    def __init__(self, id, name_len, name, tag) :
+        self.id = id
+        self.name_len = name_len
+        self.name = name
+        self.tag = tag
+
+    @staticmethod
+    def parse(payload):
+        id = int.from_bytes(payload[:4], 'little')
+        name_len = int.from_bytes(payload[4:6], 'little')
+        name = payload[6:6+name_len].decode()
+        tag = int.from_bytes(payload[6+name_len:6+name_len+4], 'little')
+        return PacketAttackStatePayload(id, name_len, name, tag)
+    
+    def encode(self):
+        return self.id.to_bytes(4,'little') + self.name_len.to_bytes(2,'little') + self.name.encode() + self.tag.to_bytes(4,'little')
+    
+    def __str__(self) -> str:
+        return f"Chg Attack state: {self.id} {self.name} {self.tag}"
 
 class PacketRegistry:
     
@@ -64,6 +105,110 @@ class PacketHeader():
     def __str__(self) -> str:
         return f"0x{self.type:x}"
 
+class PacketItemPickPayload():
+    # class template tu use for a new object
+    def __init__(self, id) :
+        self.id = id
+
+    @staticmethod
+    def parse(payload):
+        return PacketItemPickPayload(int.from_bytes(payload[:4],'little'))
+    
+    def encode(self):
+        return self.id.to_bytes(4,'little')
+    
+    def __str__(self) -> str:
+        return f"Item pickup: {self.id}"
+
+class PacketRemoveElmtPayload():
+    # class template tu use for a new object
+    def __init__(self, id) :
+        self.id = id
+
+    @staticmethod
+    def parse(payload):
+        return PacketRemoveElmtPayload(int.from_bytes(payload[:4],'little'))
+    
+    def encode(self):
+        return self.id.to_bytes(4,'little')
+    
+    def __str__(self) -> str:
+        return f"Remove element: {self.id}"
+
+class PacketPlayerStatePayload():
+    # class template tu use for a new object
+    def __init__(self, id, name_len, name) :
+        self.id = id
+        self.name_len = name_len
+        self.name = name
+
+    @staticmethod
+    def parse(payload):
+        id = int.from_bytes(payload[:4],'little')
+        name_len = int.from_bytes(payload[4:6],'little')
+        name = payload[6:6+name_len].decode()
+
+        return PacketPlayerStatePayload(id, name_len, name)
+    
+    def encode(self):
+        return self.id.to_bytes(4,'little') + self.name_len.to_bytes(2, 'little') + self.name.encode() + b'\x00'
+    
+    def __str__(self) -> str:
+        return f"Player change state:  {self.id} {self.name}"
+
+class PacketNewElmtPayload():
+    # class template tu use for a new object
+    def __init__(self, id, unk1, name_len, name, X, Y, Z, unk2) :
+        self.id = id
+        self.unk1 = unk1
+        self.name_len = name_len
+        self.name = name
+        self.X = X
+        self.Y = Y
+        self.Z = Z
+        self.unk2 = unk2
+
+    @staticmethod
+    def parse(payload):
+        id = int.from_bytes(payload[:4],'little')
+        unk1 = payload[4:9]
+        name_len = int.from_bytes(payload[9:9+2],'little')
+        name = payload[11:11+name_len].decode()
+        X, Y, Z = unpack("fff",payload[11+name_len:11+name_len+12])
+        unk2 = payload[11+name_len+12:11+name_len+12+10]
+        return PacketNewElmtPayload(id, unk1, name_len, name, X, Y, Z, unk2)
+    
+    def encode(self):
+        ret = self.id.to_bytes(4,'little') + self.unk1
+        ret += self.name_len.to_bytes(2,'little') + self.name.encode()
+        ret += pack("fff", self.X, self.Y, self.Z)
+        ret += self.unk2
+        return ret
+    
+    def __str__(self) -> str:
+        return f"New element: {self.id}:{self.name} {self.X} / {self.Y} / {self.Z} {self.unk2.hex()}"
+
+class PacketFastTravelPayload():
+    # class template tu use for a new object
+    def __init__(self, src_name_len,src_name,dst_name_len,dst_name) :
+        self.src_name_len: int = src_name_len
+        self.src_name = src_name
+        self.dst_name_len: int = dst_name_len
+        self.dst_name = dst_name
+
+    @staticmethod
+    def parse(payload):
+        src_name_len = int.from_bytes(payload[:2], 'little')
+        src_name = payload[2:2+src_name_len].decode()
+        dst_name_len = int.from_bytes(payload[2+src_name_len:2+src_name_len+2], 'little')
+        dst_name = payload[2+src_name_len+2:2+src_name_len+2+dst_name_len].decode()
+        return PacketFastTravelPayload(src_name_len,src_name,dst_name_len,dst_name)
+    
+    def encode(self):
+        return self.src_name_len.to_bytes(2,'little') + self.src_name.encode() + self.dst_name_len.to_bytes(2,'little') + self.dst_name.encode()
+    
+    def __str__(self) -> str:
+        return f"Fast Travel: {self.src_name} -> {self.dst_name}"
 
 class PacketPositionPayload():
     '''
@@ -243,18 +388,21 @@ class PacketShootServerPayload():
 
 class PacketHPmodifPayload():
     '''Health Point packet'''
-    def __init__(self, payload) :
-        self.payload = payload
+    def __init__(self, id, level) :
+        self.id = id
+        self.level = level
 
     @staticmethod
     def parse(payload):
-        return PacketHPmodifPayload(payload)
+        id = int.from_bytes(payload[:4],'little')
+        level = int.from_bytes(payload[4:8],'little')
+        return PacketHPmodifPayload(id, level)
     
     def encode(self):
-        return self.payload
+        return self.id.to_bytes(4,'little') + self.level.to_bytes(4,'little')
     
     def __str__(self) -> str:
-        return f"HP modification: {self.payload.hex()}"
+        return f"HP modification: {self.id} {self.level}"
 
 
 class PacketSellPayload():
@@ -336,6 +484,18 @@ class Packet:
 
 # Decorators:
 
+@packet_type(0x6d6b)
+class NewElmtPacket(Packet):
+    """New element"""
+    TYPE = 0x6d6b
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketNewElmtPayload.parse(packet[Packet.HEADER_SIZE:])
+        return NewElmtPacket(header, payload)
+
+
 @packet_type(0x6d76)
 class PositionPacket(Packet):
     TYPE = 0x6d76
@@ -355,6 +515,16 @@ class EnemyPosPacket(Packet):
         header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
         payload = PacketEnemyPosPayload.parse(packet[Packet.HEADER_SIZE:])
         return EnemyPosPacket(header, payload)
+
+@packet_type(0x6674)
+class FastTravelPacket(Packet):
+    TYPE = 0x6674
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketFastTravelPayload.parse(packet[Packet.HEADER_SIZE:])
+        return FastTravelPacket(header, payload)
 
 @packet_type(0x1703)
 class BeaconPacket(Packet):
@@ -458,6 +628,56 @@ class XchangePacket(Packet):
         payload = PacketXchangePayload.parse(packet[Packet.HEADER_SIZE:])
         return XchangePacket(header, payload)
 
+@packet_type(0x7374)
+class PlayerStatePacket(Packet):
+    TYPE = 0x7374
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketPlayerStatePayload.parse(packet[Packet.HEADER_SIZE:])
+        return PlayerStatePacket(header, payload)
+
+@packet_type(0x7472)
+class AttackStatePacket(Packet):
+    TYPE = 0x7472
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketAttackStatePayload.parse(packet[Packet.HEADER_SIZE:])
+        return AttackStatePacket(header, payload)
+
+@packet_type(0X6565)
+class ItemPickPacket(Packet):
+    TYPE = 0X6565
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketItemPickPayload.parse(packet[Packet.HEADER_SIZE:])
+        return ItemPickPacket(header, payload)
+
+@packet_type(0x7878)
+class RemoveElmtPacket(Packet):
+    TYPE = 0x7878
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketRemoveElmtPayload.parse(packet[Packet.HEADER_SIZE:])
+        return RemoveElmtPacket(header, payload)
+
+@packet_type(0x6370)
+class NewInventoryPacket(Packet):
+    TYPE = 0x6370
+
+    @staticmethod
+    def parse(packet):
+        header = PacketHeader.parse(packet[:Packet.HEADER_SIZE])
+        payload = PacketNewInventoryPayload.parse(packet[Packet.HEADER_SIZE:])
+        return RemoveElmtPacket(header, payload)
+
 FILTERS_DICT = {
     'Show only unknown': 'pkt.header.type not in PacketRegistry.TYPE_TO_CLASS',
     'Whitelist': 'pkt.header.type in whitelist',
@@ -465,7 +685,7 @@ FILTERS_DICT = {
 }
 
 blacklist = [PositionPacket.TYPE, BeaconPacket.TYPE, EnemyPosPacket.TYPE, JumpPacket.TYPE ]
-whitelist = [BeaconPacket.TYPE]
+whitelist = [ItemPickPacket.TYPE, NewInventoryPacket.TYPE]
 
 FILTERS = list(FILTERS_DICT.keys())
 
